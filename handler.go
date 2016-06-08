@@ -22,33 +22,52 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 		if cloneResponse > 0 {
 			log.Println("an error occured cloning repo")
 			log.Println("user:" + gituser + ", repo:" + reponame)
+			io.WriteString(w, "error cloning repo\n")
 			return
 		}
 		log.Println("clone sucessful")
+		io.WriteString(w, "clone sucessful\n")
 	}
 	log.Println("running git pull")
 	gitresponse := gitpull(gituser, reponame)
 	if gitresponse > 0 {
 		log.Println("an error occured running git pull")
 		log.Println("user:" + gituser + ", repo:" + reponame)
+		io.WriteString(w, "error running git pull\n")
 		return
 	}
 	log.Println("git pull sucessful")
+	io.WriteString(w, "pull sucessful")
 	log.Println("running go build")
 	gobuildresponse := gobuild(reponame)
 	if gobuildresponse > 0 {
 		log.Println("an error occured running go build")
 		log.Println("reponame:" + reponame)
+		io.WriteString(w, "error running go build\n")
 		return
 	}
+	io.WriteString(w, "go build sucessful\n")
 	log.Println("go build sucessful")
 	log.Println("copying cupserviosr confg")
 	err := copySupervisorConf(reponame)
 	if err != nil {
 		log.Println("error occured copying supervisor conf\n")
 		log.Println(err)
+		io.WriteString(w, "error copying supervisor conf\n")
+		return
 	}
+	io.WriteString(w, "supervisor conf copied")
 	log.Println("supervisor conf copied sucessfully\n")
+	log.Println("restarting app in supervisor\n")
+	supervisorReturn := restartSupervisor(reponame)
+	if supervisorReturn > 0 {
+		log.Println("an error occured restarting supervisor")
+		io.WriteString(w, "error restarting supervisor\n")
+		return
+	}
+	io.WriteString(w, "supervisor restarted")
+	log.Println("supervisor restarted sucessfully")
+	io.WriteString(w, "build sucessful")
 	log.Println("build sucessful")
 }
 
@@ -123,4 +142,19 @@ func copySupervisorConf(reponame string) error {
 		return err
 	}
 	return cerr
+}
+
+func restartSupervisor(reponame string) int {
+	cmd := exec.Command("supervisorctl", "restart", reponame)
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+		return 1
+	}
+	fmt.Println("Result:  " + out.String())
+	return 0
 }

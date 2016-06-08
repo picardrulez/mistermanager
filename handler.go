@@ -13,6 +13,7 @@ import (
 func buildHandler(w http.ResponseWriter, r *http.Request) {
 	gituser := r.URL.Query().Get("user")
 	reponame := r.URL.Query().Get("repo")
+	gobuilder := r.URL.Query().Get("gobuild")
 
 	log.Println("checking if repo exists")
 	repoResponse := repoCheck(reponame)
@@ -38,37 +39,39 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println("git pull sucessful")
 	io.WriteString(w, "pull sucessful")
-	log.Println("running go build")
-	gobuildresponse := gobuild(reponame)
-	if gobuildresponse > 0 {
-		log.Println("an error occured running go build")
-		log.Println("reponame:" + reponame)
-		io.WriteString(w, "error running go build\n")
-		return
+	if gobuilder == "true" {
+		log.Println("running go build")
+		gobuildresponse := gobuild(reponame)
+		if gobuildresponse > 0 {
+			log.Println("an error occured running go build")
+			log.Println("reponame:" + reponame)
+			io.WriteString(w, "error running go build\n")
+			return
+		}
+		io.WriteString(w, "go build sucessful\n")
+		log.Println("go build sucessful")
+		log.Println("copying cupserviosr confg")
+		err := copySupervisorConf(reponame)
+		if err != nil {
+			log.Println("error occured copying supervisor conf\n")
+			log.Println(err)
+			io.WriteString(w, "error copying supervisor conf\n")
+			return
+		}
+		io.WriteString(w, "supervisor conf copied")
+		log.Println("supervisor conf copied sucessfully\n")
+		log.Println("restarting app in supervisor\n")
+		supervisorReturn := restartSupervisor(reponame)
+		if supervisorReturn > 0 {
+			log.Println("an error occured restarting supervisor")
+			io.WriteString(w, "error restarting supervisor\n")
+			return
+		}
+		io.WriteString(w, "supervisor restarted")
+		log.Println("supervisor restarted sucessfully")
+		io.WriteString(w, "build sucessful")
+		log.Println("build sucessful")
 	}
-	io.WriteString(w, "go build sucessful\n")
-	log.Println("go build sucessful")
-	log.Println("copying cupserviosr confg")
-	err := copySupervisorConf(reponame)
-	if err != nil {
-		log.Println("error occured copying supervisor conf\n")
-		log.Println(err)
-		io.WriteString(w, "error copying supervisor conf\n")
-		return
-	}
-	io.WriteString(w, "supervisor conf copied")
-	log.Println("supervisor conf copied sucessfully\n")
-	log.Println("restarting app in supervisor\n")
-	supervisorReturn := restartSupervisor(reponame)
-	if supervisorReturn > 0 {
-		log.Println("an error occured restarting supervisor")
-		io.WriteString(w, "error restarting supervisor\n")
-		return
-	}
-	io.WriteString(w, "supervisor restarted")
-	log.Println("supervisor restarted sucessfully")
-	io.WriteString(w, "build sucessful")
-	log.Println("build sucessful")
 }
 
 func gitpull(gituser string, reponame string) int {

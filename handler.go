@@ -32,6 +32,15 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("user:" + gituser + ", repo:" + reponame)
 		return
 	}
+	log.Println("git pull sucessful")
+	log.Println("running go build")
+	gobuildresponse := gobuild(reponame)
+	if gobuildresponse > 0 {
+		log.Println("an error occured running go build")
+		log.Println("reponame:" + reponame)
+		return
+	}
+	log.Println("go build sucessful")
 	log.Println("build sucessful")
 }
 
@@ -63,6 +72,24 @@ func gitclone(gituser string, reponame string) int {
 	fmt.Println("Result:  " + out.String())
 	return 0
 }
+
+func gobuild(reponame string) int {
+	os.Chdir(myrepos + "/" + reponame)
+
+	cmd := exec.Command("go", "build")
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+		return 1
+	}
+	fmt.Println("Result:  " + out.String())
+	return 0
+}
+
 func repoCheck(repo string) bool {
 	if _, err := os.Stat(myrepos + "/" + repo); err != nil {
 		fmt.Fprintln(os.Stderr, err)

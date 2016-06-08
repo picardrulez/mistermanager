@@ -13,7 +13,7 @@ var myrepos string = myhome + "/repos"
 
 func main() {
 	http.HandleFunc("/", rootHandler)
-	//http.HandleFunc("/build", buildHandler)
+	http.HandleFunc("/build", buildHandler)
 
 	log.Println("Mister Manager " + version + " Started")
 	http.ListenAndServe(":8080", nil)

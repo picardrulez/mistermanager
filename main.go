@@ -7,7 +7,7 @@ import (
 )
 
 var version string = "v0.0.1"
-var myuser string = "mistermanager"
+var myuser string = "root"
 var myhome string = "/var/lib/mistermanager"
 var myrepos string = myhome + "/repos"
 

@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -41,6 +42,13 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Println("go build sucessful")
+	log.Println("copying cupserviosr confg")
+	err := copySupervisorConf(reponame)
+	if err != nil {
+		log.Println("error occured copying supervisor conf\n")
+		log.Println(err)
+	}
+	log.Println("supervisor conf copied sucessfully\n")
 	log.Println("build sucessful")
 }
 
@@ -96,4 +104,23 @@ func repoCheck(repo string) bool {
 		return false
 	}
 	return true
+}
+
+func copySupervisorConf(reponame string) error {
+	in, err := os.Open(myrepos + "/" + reponame + "/" + reponame + ".conf")
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	out, err := os.Create("/etc/supervisor/conf.d/" + reponame + ".conf")
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	_, err = io.Copy(out, in)
+	cerr := out.Close()
+	if err != nil {
+		return err
+	}
+	return cerr
 }

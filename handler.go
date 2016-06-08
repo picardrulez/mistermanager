@@ -32,6 +32,7 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("user:" + gituser + ", repo:" + reponame)
 		return
 	}
+	log.Println("build sucessful")
 }
 
 func gitpull(gituser string, reponame string) int {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"net/http"
@@ -47,13 +48,18 @@ func gitpull(gituser string, reponame string) int {
 
 func gitclone(gituser string, reponame string) int {
 	os.Chdir(myrepos)
-	cmd := "git"
-	args := []string{"clone git@github.com:" + gituser + "/" + reponame}
 
-	if err := exec.Command(cmd, args...).Run(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+	cmd := exec.Command("git", "clone", "git@github.com:"+gituser+"/"+reponame)
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
 		return 1
 	}
+	fmt.Println("Result:  " + out.String())
 	return 0
 }
 func repoCheck(repo string) bool {

@@ -34,8 +34,9 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func gitpull(gituser string, reponame string) int {
+	os.Chdir(myrepos + "/" + reponame)
 	cmd := "git"
-	args := []string{"-C " + myrepos + "/" + reponame + " pull"}
+	args := []string{"pull"}
 
 	if err := exec.Command(cmd, args...).Run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -45,8 +46,9 @@ func gitpull(gituser string, reponame string) int {
 }
 
 func gitclone(gituser string, reponame string) int {
+	os.Chdir(myrepos)
 	cmd := "git"
-	args := []string{"-C " + myrepos + "/" + reponame + "clone ssh://git@github.com:" + gituser + "/" + reponame}
+	args := []string{"clone ssh://git@github.com:" + gituser + "/" + reponame}
 
 	if err := exec.Command(cmd, args...).Run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

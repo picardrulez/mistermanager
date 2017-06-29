@@ -9,6 +9,7 @@ import (
 var configfile string = "/etc/mistermanager/mm.conf"
 
 type Config struct {
+	Provider string
 	User     string
 	Repo     string
 	Bind     string

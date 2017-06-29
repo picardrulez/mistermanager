@@ -106,8 +106,10 @@ func gitpull(gituser string, reponame string) int {
 
 func gitclone(gituser string, reponame string) int {
 	os.Chdir(myrepos)
+	var config = ReadConfig()
+	provider := config.Provider
 
-	cmd := exec.Command("git", "clone", "git@github.com:"+gituser+"/"+reponame)
+	cmd := exec.Command("git", "clone", provider+gituser+"/"+reponame)
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &out

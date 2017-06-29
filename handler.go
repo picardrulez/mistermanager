@@ -168,7 +168,9 @@ func copySupervisorConf(reponame string) error {
 }
 
 func restartSupervisor(reponame string) int {
-	cmd := exec.Command("supervisorctl", "restart", reponame)
+	//	cmd := exec.Command("supervisorctl", "restart", reponame)
+	fmt.Println("restarting for " + reponame)
+	cmd := exec.Command("service", "supervisor", "restart")
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &out

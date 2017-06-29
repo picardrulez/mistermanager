@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -71,6 +72,23 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("supervisor restarted sucessfully")
 		io.WriteString(w, "build sucessful")
 		log.Println("build sucessful")
+		var config = ReadConfig()
+		notifyManagers := config.Managers
+		if len(notifyManagers) != 0 {
+			io.WriteString(w, "Notifying other managers")
+			log.Println("notifying other managers")
+			notifyReturn, notifyMsg := notify(gituser, reponame)
+			if notifyReturn == 2 {
+				io.WriteString(w, "error notifying "+notifyMsg)
+				log.Println("error notifying " + notifyMsg)
+			} else if notifyReturn == 1 {
+				io.WriteString(w, "error updating on "+notifyMsg)
+				log.Println("error updating on " + notifyMsg)
+			} else {
+				io.WriteString(w, "other managers have completed sucessfully")
+				log.Println("other managers have completed sucessfully")
+			}
+		}
 	}
 }
 
@@ -160,4 +178,32 @@ func restartSupervisor(reponame string) int {
 	}
 	fmt.Println("Result:  " + out.String())
 	return 0
+}
+
+func notify(gituser string, reponame string) (int, string) {
+	var config = ReadConfig()
+	notifyManagers := config.Managers
+	if len(notifyManagers) == 0 {
+		return 0, "none"
+	} else {
+		for i := 0; i < len(notifyManagers); i++ {
+			notifyBox := notifyManagers[i]
+			response, err := http.Get("http://" + notifyBox + ":8080/build?user=" + gituser + "&repo=" + reponame + "&gobuild=true")
+			if err != nil {
+				fmt.Printf("%s", err)
+				return 2, notifyBox
+			} else {
+				pageContent, err := ioutil.ReadAll(response.Body)
+				if err != nil {
+					fmt.Printf("%s", err)
+					return 2, notifyBox
+				}
+				stringPageReturn := string(pageContent)
+				if stringPageReturn != "completed" {
+					return 1, notifyBox
+				}
+			}
+		}
+	}
+	return 0, "completed"
 }

@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-var version string = "v0.1.0"
+var version string = "v0.1.1"
 var myuser string = "root"
 var myhome string = "/var/lib/mistermanager"
 var myrepos string = myhome + "/repos"

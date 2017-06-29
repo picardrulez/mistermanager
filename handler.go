@@ -39,7 +39,6 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Println("git pull sucessful")
-	io.WriteString(w, "pull sucessful")
 	if gobuilder == "true" {
 		log.Println("running go build")
 		gobuildresponse := gobuild(reponame)
@@ -49,7 +48,6 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 			io.WriteString(w, "error running go build\n")
 			return
 		}
-		io.WriteString(w, "go build sucessful\n")
 		log.Println("go build sucessful")
 		log.Println("copying cupserviosr confg")
 		err := copySupervisorConf(reponame)
@@ -59,7 +57,6 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 			io.WriteString(w, "error copying supervisor conf\n")
 			return
 		}
-		io.WriteString(w, "supervisor conf copied")
 		log.Println("supervisor conf copied sucessfully\n")
 		log.Println("restarting app in supervisor\n")
 		supervisorReturn := restartSupervisor(reponame)
@@ -68,14 +65,12 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 			io.WriteString(w, "error restarting supervisor\n")
 			return
 		}
-		io.WriteString(w, "supervisor restarted")
 		log.Println("supervisor restarted sucessfully")
-		io.WriteString(w, "build sucessful")
+		io.WriteString(w, "completed")
 		log.Println("build sucessful")
 		var config = ReadConfig()
 		notifyManagers := config.Managers
 		if len(notifyManagers) != 0 {
-			io.WriteString(w, "Notifying other managers")
 			log.Println("notifying other managers")
 			notifyReturn, notifyMsg := notify(gituser, reponame)
 			if notifyReturn == 2 {

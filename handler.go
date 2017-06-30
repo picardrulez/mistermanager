@@ -28,7 +28,6 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		log.Println("clone sucessful")
-		io.WriteString(w, "clone sucessful\n")
 	}
 	log.Println("running git pull")
 	gitresponse := gitpull(gituser, reponame)
@@ -167,6 +166,10 @@ func copyBinary(reponame string) error {
 	if err != nil {
 		return err
 	}
+	err = os.Chmod("/usr/local/bin/"+reponame, 0775)
+	if err != nil {
+		return err
+	}
 	return cerr
 }
 
@@ -214,6 +217,7 @@ func notify(gituser string, reponame string) (int, string) {
 	} else {
 		for i := 0; i < len(notifyManagers); i++ {
 			notifyBox := notifyManagers[i]
+			fmt.Println("notifying: " + "http://" + notifyBox + ":8080/build?user=" + gituser + "&repo=" + reponame + "&gobuild=true")
 			response, err := http.Get("http://" + notifyBox + ":8080/build?user=" + gituser + "&repo=" + reponame + "&gobuild=true")
 			if err != nil {
 				fmt.Printf("%s", err)

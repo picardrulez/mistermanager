@@ -49,8 +49,16 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		log.Println("go build sucessful")
+		log.Println("copying binary")
+		err := copyBinary(reponame)
+		if err != nil {
+			log.Println("error occured copyign binary\n")
+			log.Println(err)
+			io.WriteString(w, "an error occured copying binary\n")
+			return
+		}
 		log.Println("copying cupserviosr confg")
-		err := copySupervisorConf(reponame)
+		err = copySupervisorConf(reponame)
 		if err != nil {
 			log.Println("error occured copying supervisor conf\n")
 			log.Println(err)
@@ -141,6 +149,25 @@ func repoCheck(repo string) bool {
 		return false
 	}
 	return true
+}
+
+func copyBinary(reponame string) error {
+	in, err := os.Open(myrepos + "/" + reponame + "/" + reponame)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	out, err := os.Create("/usr/local/bin/" + reponame)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	_, err = io.Copy(out, in)
+	cerr := out.Close()
+	if err != nil {
+		return err
+	}
+	return cerr
 }
 
 func copySupervisorConf(reponame string) error {

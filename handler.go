@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
+	"strings"
 )
 
 func buildHandler(w http.ResponseWriter, r *http.Request) {
@@ -215,25 +217,52 @@ func notify(gituser string, reponame string) (int, string) {
 	if len(notifyManagers) == 0 {
 		return 0, "none"
 	} else {
+		var notifychan chan string = make(chan string)
 		for i := 0; i < len(notifyManagers); i++ {
 			notifyBox := notifyManagers[i]
-			log.Println("notifying: " + "http://" + notifyBox + ":8080/build?user=" + gituser + "&repo=" + reponame + "&gobuild=true")
-			response, err := http.Get("http://" + notifyBox + ":8080/build?user=" + gituser + "&repo=" + reponame + "&gobuild=true")
+			go notifier(notifyBox, gituser, reponame, notifychan)
+		}
+		for i := 0; i < len(notifyManagers); i++ {
+			boxReturn := <-notifychan
+			msgSlice := strings.Split(boxReturn, ":")
+			msgBox := msgSlice[0]
+			msgReturn, err := strconv.Atoi(msgSlice[1])
 			if err != nil {
-				log.Printf("%s", err)
-				return 2, notifyBox
+				log.Println(err)
+			}
+			if msgReturn > 0 {
+				log.Println("error running notifier on: " + msgBox)
 			} else {
-				pageContent, err := ioutil.ReadAll(response.Body)
-				if err != nil {
-					log.Printf("%s", err)
-					return 2, notifyBox
-				}
-				stringPageReturn := string(pageContent)
-				if stringPageReturn != "completed" {
-					return 1, notifyBox
-				}
+				log.Println(msgBox + " returned sucessfully")
 			}
 		}
 	}
 	return 0, "completed"
+}
+
+func notifier(notifyBox string, gituser string, reponame string, notifychan chan string) (int, string) {
+	log.Println("notifying:  " + "http://" + notifyBox + ":8080/build?user=" + gituser + "&repo=" + reponame + "&gobuild=true")
+	response, err := http.Get("http://" + notifyBox + ":8080/build?user=" + gituser + "&repo=" + reponame + "&gobuild=true")
+	if err != nil {
+		log.Println("error making http get call to " + notifyBox)
+		notifychan <- notifyBox + ":" + "3"
+		log.Printf("%s", err)
+		return 3, notifyBox
+	} else {
+		pageContent, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			log.Println("error reading page contents on: " + notifyBox)
+			log.Printf("%s", err)
+			notifychan <- notifyBox + ":" + "2"
+			return 2, notifyBox
+		}
+		stringPageReturn := string(pageContent)
+		if stringPageReturn != "completed" {
+			log.Println(notifyBox + " did not return completed")
+			notifychan <- notifyBox + ":" + "1"
+			return 1, notifyBox
+		}
+	}
+	notifychan <- notifyBox + ":" + "0"
+	return 0, notifyBox
 }

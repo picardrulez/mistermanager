@@ -9,8 +9,8 @@ import (
 )
 
 //Set global vars
-var version string = "v0.1.6"
-var logfile string = "/var/log/misteramanager"
+var version string = "v0.1.7"
+var logfile string = "/var/log/mistermanager"
 var myuser string = "root"
 var myhome string = "/var/lib/mistermanager"
 var myrepos string = myhome + "/repos"

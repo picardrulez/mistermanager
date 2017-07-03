@@ -221,6 +221,7 @@ func notify(gituser string, reponame string) {
 		}
 		if msgReturn > 0 {
 			log.Println("error running notifier on: " + msgBox)
+			log.Println(msgBox + " returned: " + strconv.Itoa(msgReturn))
 		} else {
 			log.Println(msgBox + " returned sucessfully")
 		}

@@ -75,7 +75,7 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		log.Println("supervisor restarted sucessfully")
-		io.WriteString(w, "completed\n")
+		io.WriteString(w, "completed")
 		log.Println("build sucessful")
 		var config = ReadConfig()
 		notifyManagers := config.Managers

@@ -51,12 +51,12 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("copying binary")
 		err := copyBinary(reponame)
 		if err != nil {
-			log.Println("error occured copyign binary\n")
+			log.Println("error occured copying binary\n")
 			log.Println(err)
 			io.WriteString(w, "an error occured copying binary\n")
 			return
 		}
-		log.Println("copying cupserviosr confg")
+		log.Println("copying superviosr config")
 		err = copySupervisorConf(reponame)
 		if err != nil {
 			log.Println("error occured copying supervisor conf\n")
@@ -100,7 +100,7 @@ func gitpull(gituser string, reponame string) int {
 	args := []string{"pull"}
 
 	if err := exec.Command(cmd, args...).Run(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		log.Println(err)
 		return 1
 	}
 	return 0
@@ -118,10 +118,10 @@ func gitclone(gituser string, reponame string) int {
 	cmd.Stderr = &stderr
 	err := cmd.Run()
 	if err != nil {
-		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+		log.Println(fmt.Sprint(err) + ": " + stderr.String())
 		return 1
 	}
-	fmt.Println("Result:  " + out.String())
+	log.Println("Result:  " + out.String())
 	return 0
 }
 
@@ -135,16 +135,16 @@ func gobuild(reponame string) int {
 	cmd.Stderr = &stderr
 	err := cmd.Run()
 	if err != nil {
-		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+		log.Println(fmt.Sprint(err) + ": " + stderr.String())
 		return 1
 	}
-	fmt.Println("Result:  " + out.String())
+	log.Println("Result:  " + out.String())
 	return 0
 }
 
 func repoCheck(repo string) bool {
 	if _, err := os.Stat(myrepos + "/" + repo); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		log.Println(err)
 		return false
 	}
 	return true
@@ -194,7 +194,7 @@ func copySupervisorConf(reponame string) error {
 
 func restartSupervisor(reponame string) int {
 	//	cmd := exec.Command("supervisorctl", "restart", reponame)
-	fmt.Println("restarting for " + reponame)
+	log.Println("restarting for " + reponame)
 	cmd := exec.Command("service", "supervisor", "restart")
 	var out bytes.Buffer
 	var stderr bytes.Buffer
@@ -202,10 +202,10 @@ func restartSupervisor(reponame string) int {
 	cmd.Stderr = &stderr
 	err := cmd.Run()
 	if err != nil {
-		fmt.Println(fmt.Sprint(err) + ": " + stderr.String())
+		log.Println(fmt.Sprint(err) + ": " + stderr.String())
 		return 1
 	}
-	fmt.Println("Result:  " + out.String())
+	log.Println("Result:  " + out.String())
 	return 0
 }
 
@@ -217,15 +217,15 @@ func notify(gituser string, reponame string) (int, string) {
 	} else {
 		for i := 0; i < len(notifyManagers); i++ {
 			notifyBox := notifyManagers[i]
-			fmt.Println("notifying: " + "http://" + notifyBox + ":8080/build?user=" + gituser + "&repo=" + reponame + "&gobuild=true")
+			log.Println("notifying: " + "http://" + notifyBox + ":8080/build?user=" + gituser + "&repo=" + reponame + "&gobuild=true")
 			response, err := http.Get("http://" + notifyBox + ":8080/build?user=" + gituser + "&repo=" + reponame + "&gobuild=true")
 			if err != nil {
-				fmt.Printf("%s", err)
+				log.Printf("%s", err)
 				return 2, notifyBox
 			} else {
 				pageContent, err := ioutil.ReadAll(response.Body)
 				if err != nil {
-					fmt.Printf("%s", err)
+					log.Printf("%s", err)
 					return 2, notifyBox
 				}
 				stringPageReturn := string(pageContent)

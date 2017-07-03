@@ -75,23 +75,15 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		log.Println("supervisor restarted sucessfully")
-		io.WriteString(w, "completed")
+		io.WriteString(w, "completed\n")
 		log.Println("build sucessful")
 		var config = ReadConfig()
 		notifyManagers := config.Managers
 		if len(notifyManagers) != 0 {
 			log.Println("notifying other managers")
-			notifyReturn, notifyMsg := notify(gituser, reponame)
-			if notifyReturn == 2 {
-				io.WriteString(w, "error notifying "+notifyMsg)
-				log.Println("error notifying " + notifyMsg)
-			} else if notifyReturn == 1 {
-				io.WriteString(w, "error updating on "+notifyMsg)
-				log.Println("error updating on " + notifyMsg)
-			} else {
-				io.WriteString(w, "other managers have completed sucessfully")
-				log.Println("other managers have completed sucessfully")
-			}
+			notify(gituser, reponame)
+			io.WriteString(w, "other managers have been notified"+"\n")
+			log.Println("other managers have been notified")
 		}
 	}
 }
@@ -211,33 +203,28 @@ func restartSupervisor(reponame string) int {
 	return 0
 }
 
-func notify(gituser string, reponame string) (int, string) {
+func notify(gituser string, reponame string) {
 	var config = ReadConfig()
 	notifyManagers := config.Managers
-	if len(notifyManagers) == 0 {
-		return 0, "none"
-	} else {
-		var notifychan chan string = make(chan string)
-		for i := 0; i < len(notifyManagers); i++ {
-			notifyBox := notifyManagers[i]
-			go notifier(notifyBox, gituser, reponame, notifychan)
+	var notifychan chan string = make(chan string)
+	for i := 0; i < len(notifyManagers); i++ {
+		notifyBox := notifyManagers[i]
+		go notifier(notifyBox, gituser, reponame, notifychan)
+	}
+	for i := 0; i < len(notifyManagers); i++ {
+		boxReturn := <-notifychan
+		msgSlice := strings.Split(boxReturn, ":")
+		msgBox := msgSlice[0]
+		msgReturn, err := strconv.Atoi(msgSlice[1])
+		if err != nil {
+			log.Println(err)
 		}
-		for i := 0; i < len(notifyManagers); i++ {
-			boxReturn := <-notifychan
-			msgSlice := strings.Split(boxReturn, ":")
-			msgBox := msgSlice[0]
-			msgReturn, err := strconv.Atoi(msgSlice[1])
-			if err != nil {
-				log.Println(err)
-			}
-			if msgReturn > 0 {
-				log.Println("error running notifier on: " + msgBox)
-			} else {
-				log.Println(msgBox + " returned sucessfully")
-			}
+		if msgReturn > 0 {
+			log.Println("error running notifier on: " + msgBox)
+		} else {
+			log.Println(msgBox + " returned sucessfully")
 		}
 	}
-	return 0, "completed"
 }
 
 func notifier(notifyBox string, gituser string, reponame string, notifychan chan string) (int, string) {

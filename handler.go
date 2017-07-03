@@ -82,7 +82,7 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 		if len(notifyManagers) != 0 {
 			log.Println("notifying other managers")
 			notify(gituser, reponame)
-			io.WriteString(w, "other managers have been notified"+"\n")
+			io.WriteString(w, "\nother managers have been notified"+"\n")
 			log.Println("other managers have been notified")
 		}
 	}

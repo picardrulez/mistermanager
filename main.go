@@ -11,7 +11,7 @@ import (
 )
 
 //Set global vars
-var version string = "v1.0.1"
+var version string = "v1.0.2"
 var logfile string = "/var/log/mistermanager"
 var myuser string = "root"
 var myhome string = "/var/lib/mistermanager"

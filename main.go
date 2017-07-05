@@ -7,11 +7,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 )
 
 //Set global vars
-var version string = "v1.0.5"
+var version string = "v1.0.6"
 var logfile string = "/var/log/mistermanager"
 var myuser string = "root"
 var myhome string = "/var/lib/mistermanager"
@@ -79,9 +80,14 @@ func versionHandler(w http.ResponseWriter, r *http.Request) {
 			versionURL := "http://" + notifyBox + stripQuotes
 			go managedVersion(notifyBox, versionURL, versionchan)
 		}
+		var versionArray []string
 		for i := 0; i < len(notifyManagers); i++ {
-			versionReturn := <-versionchan
-			io.WriteString(w, versionReturn)
+			versionArray[i] = <-versionchan
+			//io.WriteString(w, versionReturn)
+		}
+		sort.Strings(versionArray)
+		for i := 0; i < len(notifyManagers); i++ {
+			io.WriteString(w, versionArray[i])
 		}
 	}
 }

@@ -12,7 +12,7 @@ import (
 )
 
 //Set global vars
-var version string = "v1.0.6"
+var version string = "v1.0.7"
 var logfile string = "/var/log/mistermanager"
 var myuser string = "root"
 var myhome string = "/var/lib/mistermanager"
@@ -82,8 +82,8 @@ func versionHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		var versionArray []string
 		for i := 0; i < len(notifyManagers); i++ {
-			versionArray[i] = <-versionchan
-			//io.WriteString(w, versionReturn)
+			versionReturn := <-versionchan
+			versionArray[i] = versionReturn
 		}
 		sort.Strings(versionArray)
 		for i := 0; i < len(notifyManagers); i++ {

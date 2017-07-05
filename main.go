@@ -11,7 +11,7 @@ import (
 )
 
 //Set global vars
-var version string = "v1.0.3"
+var version string = "v1.0.4"
 var logfile string = "/var/log/mistermanager"
 var myuser string = "root"
 var myhome string = "/var/lib/mistermanager"
@@ -81,7 +81,7 @@ func versionHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		for i := 0; i < len(notifyManagers); i++ {
 			versionReturn := <-versionchan
-			io.WriteString(w, versionReturn)
+			io.WriteString(w, hostname+" "+versionReturn)
 		}
 	}
 }

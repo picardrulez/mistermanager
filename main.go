@@ -3,13 +3,14 @@ package main
 import (
 	"flag"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 )
 
 //Set global vars
-var version string = "v0.1.9"
+var version string = "v0.1.9.1"
 var logfile string = "/var/log/mistermanager"
 var myuser string = "root"
 var myhome string = "/var/lib/mistermanager"
@@ -44,10 +45,43 @@ func main() {
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "Mister Manager "+version)
+	var config = ReadConfig()
+	notifyManagers := config.Managers
+	versionPath := config.VersionPath
+	var versionchan chan string = make(chan string)
+	if len(notifyManagers) != 0 {
+		for i := 0; i < len(notifyManagers); i++ {
+			notifyBox := notifyManagers[i]
+			versionURL := notifyBox + versionPath
+			go managedVersion(notifyBox, versionURL, versionchan)
+		}
+		for i := 0; i < len(notifyManagers); i++ {
+			versionReturn := <-versionchan
+			io.WriteString(w, versionReturn)
+		}
+	}
 }
 
 func checkError(err error) {
 	if err != nil {
 		log.Println(err.Error)
 	}
+}
+
+func managedVersion(notifyBox string, url string, versionchan chan string) int {
+	response, err := http.Get(url)
+	if err != nil {
+		log.Println("error pulling version from " + notifyBox)
+		log.Printf("%s", err)
+		return 2
+	}
+	pageContent, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Println("error reading version page content from " + notifyBox)
+		log.Printf("%s", err)
+		return 1
+	}
+	stringPageReturn := string(pageContent)
+	versionchan <- notifyBox + " " + stringPageReturn + "\n"
+	return 0
 }

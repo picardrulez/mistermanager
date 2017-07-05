@@ -7,10 +7,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 //Set global vars
-var version string = "v0.1.9.1"
+var version string = "v1.0.1"
 var logfile string = "/var/log/mistermanager"
 var myuser string = "root"
 var myhome string = "/var/lib/mistermanager"
@@ -38,12 +39,17 @@ func main() {
 
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/build", buildHandler)
+	http.HandleFunc("/versions", versionHandler)
 
 	log.Println("Mister Manager " + version + " Started")
 	http.ListenAndServe(":"+*bind, nil)
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
+	io.WriteString(w, "Mister Manager "+version)
+}
+
+func versionHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "Mister Manager "+version)
 	var config = ReadConfig()
 	notifyManagers := config.Managers
@@ -52,7 +58,8 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	if len(notifyManagers) != 0 {
 		for i := 0; i < len(notifyManagers); i++ {
 			notifyBox := notifyManagers[i]
-			versionURL := notifyBox + versionPath
+			stripQuotes := strings.Replace(versionPath, "\\", "", -1)
+			versionURL := "http://" + notifyBox + stripQuotes
 			go managedVersion(notifyBox, versionURL, versionchan)
 		}
 		for i := 0; i < len(notifyManagers); i++ {

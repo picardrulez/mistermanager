@@ -119,6 +119,7 @@ func managedVersion(notifyBox string, url string, versionchan chan string, forma
 			log.Println("error decoding json")
 			return 1
 		}
+		log.Println("sending " + jsonResponse.Version + " to channel")
 		versionchan <- notifyBox + " " + jsonResponse.Version + "\n"
 		return 0
 	} else {

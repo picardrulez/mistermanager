@@ -13,7 +13,7 @@ import (
 )
 
 //Set global vars
-var version string = "v1.0.9"
+var version string = "v1.1.0"
 var logfile string = "/var/log/mistermanager"
 var myuser string = "root"
 var myhome string = "/var/lib/mistermanager"
@@ -78,7 +78,7 @@ func versionHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Println("error decoding json")
 		}
-		io.WriteString(w, jsonResponse.Version+"\n")
+		io.WriteString(w, hostname+" "+jsonResponse.Version+"\n")
 	} else {
 		pageContent, err := ioutil.ReadAll(response.Body)
 		if err != nil {

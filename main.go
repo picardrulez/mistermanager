@@ -71,13 +71,23 @@ func versionHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("error pulling version from " + hostname)
 		log.Printf("%s", err)
 	}
-	pageContent, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		log.Println("error reading version page contents from " + hostname)
-		log.Printf("%s", err)
+	if versionFormat == "json" {
+		decoder := json.NewDecoder(response.Body)
+		var jsonResponse readStruct
+		err = decoder.Decode(&jsonResponse)
+		if err != nil {
+			log.Println("error decoding json")
+		}
+		io.WriteString(w, jsonResponse.Version+"\n")
+	} else {
+		pageContent, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			log.Println("error reading version page contents from " + hostname)
+			log.Printf("%s", err)
+			stringPageReturn := string(pageContent)
+			io.WriteString(w, hostname+" "+stringPageReturn+"\n")
+		}
 	}
-	stringPageReturn := string(pageContent)
-	io.WriteString(w, hostname+" "+stringPageReturn+"\n")
 	var versionchan chan string = make(chan string)
 	if len(notifyManagers) != 0 {
 		for i := 0; i < len(notifyManagers); i++ {

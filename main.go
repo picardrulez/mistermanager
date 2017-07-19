@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"io"
 	"io/ioutil"
@@ -12,11 +13,15 @@ import (
 )
 
 //Set global vars
-var version string = "v1.0.8"
+var version string = "v1.0.9"
 var logfile string = "/var/log/mistermanager"
 var myuser string = "root"
 var myhome string = "/var/lib/mistermanager"
 var myrepos string = myhome + "/repos"
+
+type readStruct struct {
+	Version string `json:"version"`
+}
 
 func main() {
 	//Set Up Logging
@@ -58,6 +63,7 @@ func versionHandler(w http.ResponseWriter, r *http.Request) {
 	var config = ReadConfig()
 	notifyManagers := config.Managers
 	versionPath := config.VersionPath
+	versionFormat := config.VersionFormat
 	stripQuotes := strings.Replace(versionPath, "\\", "", -1)
 	localURL := "http://" + hostname + stripQuotes
 	response, err := http.Get(localURL)
@@ -78,7 +84,7 @@ func versionHandler(w http.ResponseWriter, r *http.Request) {
 			notifyBox := notifyManagers[i]
 			stripQuotes := strings.Replace(versionPath, "\\", "", -1)
 			versionURL := "http://" + notifyBox + stripQuotes
-			go managedVersion(notifyBox, versionURL, versionchan)
+			go managedVersion(notifyBox, versionURL, versionchan, versionFormat)
 		}
 		var versionArray []string
 		for i := 0; i < len(notifyManagers); i++ {
@@ -98,20 +104,32 @@ func checkError(err error) {
 	}
 }
 
-func managedVersion(notifyBox string, url string, versionchan chan string) int {
+func managedVersion(notifyBox string, url string, versionchan chan string, format string) int {
 	response, err := http.Get(url)
 	if err != nil {
 		log.Println("error pulling version from " + notifyBox)
 		log.Printf("%s", err)
 		return 2
 	}
-	pageContent, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		log.Println("error reading version page content from " + notifyBox)
-		log.Printf("%s", err)
-		return 1
+	if format == "json" {
+		decoder := json.NewDecoder(response.Body)
+		var jsonResponse readStruct
+		err = decoder.Decode(&jsonResponse)
+		if err != nil {
+			log.Println("error decoding json")
+			return 1
+		}
+		versionchan <- notifyBox + " " + jsonResponse.Version
+		return 0
+	} else {
+		pageContent, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			log.Println("error reading version page content from " + notifyBox)
+			log.Printf("%s", err)
+			return 1
+		}
+		stringPageReturn := string(pageContent)
+		versionchan <- notifyBox + " " + stringPageReturn + "\n"
+		return 0
 	}
-	stringPageReturn := string(pageContent)
-	versionchan <- notifyBox + " " + stringPageReturn + "\n"
-	return 0
 }

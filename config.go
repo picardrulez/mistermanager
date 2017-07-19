@@ -9,12 +9,13 @@ import (
 var configfile string = "/etc/mistermanager/mm.conf"
 
 type Config struct {
-	Provider    string
-	User        string
-	Repo        string
-	Bind        string
-	VersionPath string
-	Managers    []string
+	Provider      string
+	User          string
+	Repo          string
+	Bind          string
+	VersionPath   string
+	VersionFormat string
+	Managers      []string
 }
 
 func ReadConfig() Config {

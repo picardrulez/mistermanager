@@ -119,7 +119,7 @@ func managedVersion(notifyBox string, url string, versionchan chan string, forma
 			log.Println("error decoding json")
 			return 1
 		}
-		versionchan <- notifyBox + " " + jsonResponse.Version
+		versionchan <- notifyBox + " " + jsonResponse.Version + "\n"
 		return 0
 	} else {
 		pageContent, err := ioutil.ReadAll(response.Body)

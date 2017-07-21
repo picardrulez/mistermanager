@@ -1,7 +1,0 @@
-Package: mistermanager
-Architecture: amd64
-Maintainer: Geoff Scott <picardrulez@gmail.com>
-Priority: optional
-Version: 1.0.8
-Homepage:  http://www.github.com/picardrulez/mistermanager
-Description:  Mistermanager lets ya manage tha updating and stuff of a go application what runs on the server what U run mistermanager on dowg.

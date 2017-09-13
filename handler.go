@@ -13,6 +13,7 @@ import (
 	"strings"
 )
 
+// http handler for "/build"  begins the building process of the local managed app
 func buildHandler(w http.ResponseWriter, r *http.Request) {
 	gituser := r.URL.Query().Get("user")
 	reponame := r.URL.Query().Get("repo")
@@ -203,14 +204,19 @@ func restartSupervisor(reponame string) int {
 	return 0
 }
 
+//notify slave boxes to run build function
 func notify(gituser string, reponame string) {
 	var config = ReadConfig()
+	//get list of slaves
 	notifyManagers := config.Managers
+	//make a channel of slaves that need to be notified
 	var notifychan chan string = make(chan string)
 	for i := 0; i < len(notifyManagers); i++ {
 		notifyBox := notifyManagers[i]
+		//notify slave $notifyBox
 		go notifier(notifyBox, gituser, reponame, notifychan)
 	}
+	//run through list of slaves, pull response from channel
 	for i := 0; i < len(notifyManagers); i++ {
 		boxReturn := <-notifychan
 		msgSlice := strings.Split(boxReturn, ":")
@@ -228,11 +234,14 @@ func notify(gituser string, reponame string) {
 	}
 }
 
+//notify a slave to run it's build function
 func notifier(notifyBox string, gituser string, reponame string, notifychan chan string) (int, string) {
 	log.Println("notifying:  " + "http://" + notifyBox + ":8080/build?user=" + gituser + "&repo=" + reponame + "&gobuild=true")
+	//send http build call
 	response, err := http.Get("http://" + notifyBox + ":8080/build?user=" + gituser + "&repo=" + reponame + "&gobuild=true")
 	if err != nil {
 		log.Println("error making http get call to " + notifyBox)
+		//add error to notify channel
 		notifychan <- notifyBox + ":" + "3"
 		log.Printf("%s", err)
 		return 3, notifyBox
@@ -241,16 +250,19 @@ func notifier(notifyBox string, gituser string, reponame string, notifychan chan
 		if err != nil {
 			log.Println("error reading page contents on: " + notifyBox)
 			log.Printf("%s", err)
+			//send error to notify channel
 			notifychan <- notifyBox + ":" + "2"
 			return 2, notifyBox
 		}
 		stringPageReturn := string(pageContent)
 		if stringPageReturn != "completed" {
 			log.Println(notifyBox + " did not return completed")
+			//send error to notification channel
 			notifychan <- notifyBox + ":" + "1"
 			return 1, notifyBox
 		}
 	}
+	//send 0 to notification channel
 	notifychan <- notifyBox + ":" + "0"
 	return 0, notifyBox
 }

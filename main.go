@@ -51,21 +51,28 @@ func main() {
 	http.ListenAndServe(":"+*bind, nil)
 }
 
+// http handler "/" root function
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "Mister Manager "+version)
 }
 
+// http handler /versions  displays all versions of managed app on slaves
 func versionHandler(w http.ResponseWriter, r *http.Request) {
 	hostname, err := os.Hostname()
 	if err != nil {
 		log.Println("error getting hostname")
 	}
 	var config = ReadConfig()
+	//get list of managed slaves
 	notifyManagers := config.Managers
+	//get version path
 	versionPath := config.VersionPath
+	//get version format
 	versionFormat := config.VersionFormat
 	stripQuotes := strings.Replace(versionPath, "\\", "", -1)
+	//build local url to request version
 	localURL := "http://" + hostname + stripQuotes
+	//get local managed app version
 	response, err := http.Get(localURL)
 	if err != nil {
 		log.Println("error pulling version from " + hostname)
@@ -89,6 +96,7 @@ func versionHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	var versionchan chan string = make(chan string)
+	//if local box is a master, ask for versions from slaves
 	if len(notifyManagers) != 0 {
 		for i := 0; i < len(notifyManagers); i++ {
 			notifyBox := notifyManagers[i]
@@ -114,7 +122,9 @@ func checkError(err error) {
 	}
 }
 
+//get local managed app version
 func managedVersion(notifyBox string, url string, versionchan chan string, format string) int {
+	//makes http request for version
 	response, err := http.Get(url)
 	if err != nil {
 		log.Println("error pulling version from " + notifyBox)

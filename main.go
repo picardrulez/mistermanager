@@ -118,7 +118,7 @@ func versionHandler(w http.ResponseWriter, r *http.Request) {
 
 func checkError(err error) {
 	if err != nil {
-		log.Println(err.Error)
+		log.Println(err.Error())
 	}
 }
 

@@ -54,7 +54,7 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("copying binary")
 		err := copyBinary(reponame)
 		if err != nil {
-			log.Println("error occured copying binary\n")
+			log.Println("error occured copying binary")
 			log.Println(err)
 			io.WriteString(w, "an error occured copying binary\n")
 			return
@@ -62,13 +62,13 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("copying superviosr config")
 		err = copySupervisorConf(reponame)
 		if err != nil {
-			log.Println("error occured copying supervisor conf\n")
+			log.Println("error occured copying supervisor conf")
 			log.Println(err)
 			io.WriteString(w, "error copying supervisor conf\n")
 			return
 		}
-		log.Println("supervisor conf copied sucessfully\n")
-		log.Println("restarting app in supervisor\n")
+		log.Println("supervisor conf copied sucessfully")
+		log.Println("restarting app in supervisor")
 		supervisorReturn := restartSupervisor(reponame)
 		if supervisorReturn > 0 {
 			log.Println("an error occured restarting supervisor")
